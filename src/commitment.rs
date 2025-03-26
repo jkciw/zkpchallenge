@@ -1,45 +1,59 @@
-use secp256k1::{Secp256k1, SecretKey, PublicKey, All};
+use secp256k1::{Secp256k1, SecretKey, PublicKey, All, Scalar};
+use secp256k1::hashes::{sha256, Hash};
 use rand::rngs::OsRng;
 use rand::RngCore;
 use std::error::Error;
 
-/// Struct representing a Pedersen Commitment.
 pub struct PedersenCommitment {
     pub value: u64,
     pub blinding: SecretKey,
     pub commitment: PublicKey,
 }
 
-/// Generates a blinding factor (secret key).
-fn generate_blinding_factor() -> Result<SecretKey, Box<dyn Error>> {
-    let mut rng = OsRng;
-    let mut blinding_bytes = [0u8; 32];
-    rng.fill_bytes(&mut blinding_bytes);
-    
-    SecretKey::from_slice(&blinding_bytes).map_err(|e| format!("Blinding factor error: {}", e).into())
+fn get_generator_h(secp: &Secp256k1<All>, generator_g: &PublicKey) -> Result<PublicKey, Box<dyn Error>> {
+    let hash = sha256::Hash::hash(&generator_g.serialize());
+    let h_sk = SecretKey::from_slice(&hash.to_byte_array())?;
+    let generator_h = PublicKey::from_secret_key(secp, &h_sk);
+    Ok(generator_h)
 }
 
-/// Generates a commitment using the blinding factor.
-fn generate_commitment(secp: &Secp256k1<All>, blinding: &SecretKey) -> Result<PublicKey, Box<dyn Error>> {
-    let generator_h = PublicKey::from_secret_key(secp, blinding);
-    let generator_g = PublicKey::from_secret_key(secp, &SecretKey::from_slice(&[2; 32]).unwrap());
+fn scalar_from_u64(value: u64) -> Result<SecretKey, Box<dyn Error>> {
+    // u64 to 8 little-endian bytes and pad the rest with zeros
+    let mut bytes = [0u8; 32];
+    bytes[..8].copy_from_slice(&value.to_le_bytes());
+    let sk = SecretKey::from_slice(&bytes)?;
+    Ok(sk)
+}
 
-    let commitment = generator_g.combine(&generator_h)
-        .map_err(|_| "Failed to generate Pedersen Commitment")?;
+fn generate_commitment(secp: &Secp256k1<All>, value: u64, blinding: &SecretKey) -> Result<PublicKey, Box<dyn Error>> {
+    let a_sk = scalar_from_u64(value)?;
+    
+    let secret_g = SecretKey::from_slice(&[1; 32])?;
+    let generator_g = PublicKey::from_secret_key(secp, &secret_g);
 
+    // independent generator from G.
+    let generator_h = get_generator_h(secp, &generator_g)?;
+    
+    let a_g = generator_g.mul_tweak(secp, &a_sk.into())?;
+    
+    let blinding_scalar = Scalar::from_be_bytes(blinding.secret_bytes()).map_err(|_| "Invalid scalar")?;
+    let r_h = generator_h.mul_tweak(secp, &blinding_scalar)?;
+    
+    let commitment = a_g.combine(&r_h)?;
+    
     Ok(commitment)
 }
 
-/// Generates a Pedersen Commitment for a given value.
 pub fn generate_pedersen_commitment(value: u64) -> Result<PedersenCommitment, Box<dyn Error>> {
     let secp = Secp256k1::new();
-
-    let blinding = generate_blinding_factor()?;
-    let commitment = generate_commitment(&secp, &blinding)?;
-
-    debug_assert!(commitment.serialize().len() == 33, "Invalid commitment generated!");
-
-
+    
+    let mut rng = OsRng;
+    let mut blinding_bytes = [0u8; 32];
+    rng.fill_bytes(&mut blinding_bytes);
+    let blinding = SecretKey::from_slice(&blinding_bytes)?;
+    
+    let commitment = generate_commitment(&secp, value, &blinding)?;
+    
     Ok(PedersenCommitment {
         value,
         blinding,
