@@ -15,11 +15,11 @@ pub async fn verifier_main() -> Result<(), Box<dyn Error>> {
     let listener = TcpListener::bind("127.0.0.1:8080").await?;
     println!("Verifier: Listening on 127.0.0.1:8080...");
 
-    // Wait for a transaction
-    let tx_json = receive_proof(&listener).await;
+    // Wait for a transaction from the Prover.
+    let tx_json = receive_proof(&listener).await?;
     println!("Verifier: Received a confidential transaction");
 
-    // Deserialize the received transaction
+    // Deserialize the received JSON into a tuple (ConfidentialTransaction, Vec<u8>).
     let (tx, schnorr_sig_bytes): (ConfidentialTransaction, Vec<u8>) =
         serde_json::from_str(&tx_json).map_err(|e| format!("Failed to deserialize: {}", e))?;
 
@@ -33,14 +33,13 @@ pub async fn verifier_main() -> Result<(), Box<dyn Error>> {
         .map_err(|_| "Invalid sender public key format")?;
         
     let is_valid_tx = verify_confidential_tx(&tx);
-        
     let is_valid_sig = secp.verify_schnorr(&schnorr_sig, &tx_hash, &sender_pk).is_ok();
 
     println!("Verifier: Transaction Valid? {}", is_valid_tx);
     println!("Verifier: Schnorr Signature Valid? {}", is_valid_sig);
 
     if is_valid_tx && is_valid_sig {
-        println!("Verifier: Confidential Transaction is VALID! ");
+        println!("Verifier: Confidential Transaction is VALID!");
     } else {
         println!("Verifier: Invalid transaction or signature.");
     }

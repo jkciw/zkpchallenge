@@ -32,12 +32,12 @@ fn generate_commitment(secp: &Secp256k1<All>, value: u64, blinding: &SecretKey) 
 
     let generator_h = get_generator_h(secp, &generator_g)?;
     
-    let v_g = generator_g.mul_tweak(secp, &value_scalar)?;
+    let a_g = generator_g.mul_tweak(secp, &value_scalar)?;
 
-    let blinding_scalar = Scalar::from_be_bytes(blinding.secret_bytes()).map_err(|_| "Invalid scalar")?;
+    let blinding_scalar = Scalar::from_be_bytes(blinding.secret_bytes()).map_err(|_| "Invalid blinding scalar")?;
     let r_h = generator_h.mul_tweak(secp, &blinding_scalar)?;
     
-    let commitment = v_g.combine(&r_h)?;
+    let commitment = a_g.combine(&r_h)?;
     
     Ok(commitment)
 }
