@@ -23,11 +23,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     match mode.as_str() {
         "prover" => {
             println!("Starting Prover...");
-            runtime.block_on(prover::prover_main());
+            runtime.block_on(prover::prover_main())?;
         }
         "verifier" => {
             println!("Starting Verifier...");
-            runtime.block_on(verifier::verifier_main());
+            runtime.block_on(verifier::verifier_main())?;
         }
         _ => {
             eprintln!("Invalid mode. Use 'prover' or 'verifier'.");

@@ -4,6 +4,7 @@ use rand::rngs::OsRng;
 use rand::RngCore;
 use std::error::Error;
 
+#[allow(dead_code)]
 pub struct PedersenCommitment {
     pub value: u64,
     pub blinding: SecretKey,
@@ -19,7 +20,7 @@ fn get_generator_h(secp: &Secp256k1<All>, generator_g: &PublicKey) -> Result<Pub
 
 fn scalar_from_u64(value: u64) -> Result<Scalar, Box<dyn Error>> {
     let mut bytes = [0u8; 32];
-    bytes[..8].copy_from_slice(&value.to_le_bytes());
+    bytes[..8].copy_from_slice(&value.to_le_bytes()); // or to_be_bytes(), but be consistent!
     let scalar = Scalar::from_be_bytes(bytes).map_err(|_| "Invalid scalar")?;
     Ok(scalar)
 }

@@ -1,11 +1,8 @@
-use bitcoincore_rpc::bitcoin;
 use rand::rngs::OsRng;
 use rand::RngCore;
-use secp256k1::{
-    Secp256k1, SecretKey, PublicKey, XOnlyPublicKey, schnorr::Signature, Message, Keypair, All,
-};
+use secp256k1::{Secp256k1, SecretKey, PublicKey, schnorr::Signature, Message, Keypair, All};
 use crate::challenge::BulletproofChallenge;
-use crate::confidential_tx::{create_confidential_tx, ConfidentialTransaction};
+use crate::confidential_tx::{create_confidential_tx};
 use crate::inner_product::compute_inner_product_commitment;
 use crate::network::send_proof;
 use serde_json;
@@ -23,10 +20,12 @@ pub fn respond_to_challenge(
     let secp = Secp256k1::new();
     let response_commitment = compute_inner_product_commitment(bit_commitments)
         .expect("Failed to compute inner product commitment");
+
     let mut rng = OsRng;
     let mut response_bytes = [0u8; 32];
     rng.fill_bytes(&mut response_bytes);
-    let response_challenge = SecretKey::from_slice(&response_bytes).expect("Response challenge generation failed");
+    let response_challenge = SecretKey::from_slice(&response_bytes)
+        .expect("Response challenge generation failed");
 
     BulletproofResponse {
         response_commitment,

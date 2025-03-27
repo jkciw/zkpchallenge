@@ -1,4 +1,4 @@
-use secp256k1::{PublicKey, Secp256k1, SecretKey, XOnlyPublicKey};
+use secp256k1::{PublicKey, Secp256k1, SecretKey};
 use crate::{commitment::generate_pedersen_commitment, prover::BulletproofResponse};
 use crate::prover::respond_to_challenge;
 use crate::challenge::generate_challenge;
@@ -7,10 +7,10 @@ use serde::{Serialize, Deserialize};
 
 #[derive(Serialize, Deserialize)]
 pub struct ConfidentialTransaction {
-    pub sender: Vec<u8>,
-    pub receiver: Vec<u8>,
-    pub amount_commitment: Vec<u8>,
-    pub proof: Vec<u8>,
+    pub sender: Vec<u8>,         // Serialized sender public key (XOnly)
+    pub receiver: Vec<u8>,       // Serialized receiver public key
+    pub amount_commitment: Vec<u8>, // Serialized Pedersen commitment
+    pub proof: Vec<u8>,          // Serialized Bulletproof proof data
 }
 
 /// Convert PublicKey to bytes
