@@ -41,7 +41,7 @@ fn generate_keypair(secp: &Secp256k1<All>, rng: &mut OsRng) -> (SecretKey, Publi
 }
 
 /// Main Prover Function: creates a confidential transaction, signs it using Schnorr, and sends it.
-pub async fn prover_main() -> Result<(), Box<dyn Error>> {
+pub async fn prover_main(address: &str) -> Result<(), Box<dyn Error>> {
     let secp = Secp256k1::new();
     let mut rng = OsRng;
 
@@ -70,7 +70,7 @@ pub async fn prover_main() -> Result<(), Box<dyn Error>> {
 
     // Serialize to JSON and send to the Verifier.
     let tx_json = serde_json::to_string(&signed_tx)?;
-    send_proof(tx_json, "127.0.0.1:8080").await?;
+    send_proof(tx_json, address).await?;
 
     Ok(())
 }

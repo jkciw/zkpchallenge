@@ -12,9 +12,9 @@ pub fn verify_bulletproof(response: &BulletproofResponse, expected_commitment: &
 }
 
 /// Main Verifier Function: listens for a transaction, deserializes it, and verifies its validity.
-pub async fn verifier_main() -> Result<(), Box<dyn Error>> {
-    let listener = TcpListener::bind("127.0.0.1:8080").await?;
-    println!("Verifier: Listening on 127.0.0.1:8080...");
+pub async fn verifier_main(address: &str) -> Result<(), Box<dyn Error>> {
+    let listener = TcpListener::bind(address).await?;
+    println!("Verifier: Listening on {}", address);
 
     // Wait for a transaction from the Prover.
     let tx_json = receive_proof(&listener).await?;
