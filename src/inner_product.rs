@@ -8,9 +8,13 @@ pub fn compute_inner_product_commitment(bit_commitments: &[PublicKey]) -> Result
 
     let mut result = bit_commitments[0];
 
+    // Recursively sum result with the next commitment
+    // Mathematical representation: result = commitment[0] + commitment[1] + ... + commitment[n]
     for commitment in bit_commitments.iter().skip(1) {
-        result = result.combine(commitment)
-            .map_err(|_| "Error: Failed to combine commitments")?;
+        result = result.clone() //TODO: Combine the current result with the next commitment
+        
+        // Mathematical representaiton: result = result + commitment
+        // NOTE: Final result also needs to handle possible errors.
     }
 
     Ok(result)
